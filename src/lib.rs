@@ -10,6 +10,8 @@
 #![crate_name = "gleam"]
 #![crate_type = "lib"]
 
+extern crate ref_slice;
+
 pub mod gl;
 
 mod ffi {

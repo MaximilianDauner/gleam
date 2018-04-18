@@ -7,6 +7,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use ref_slice::ref_slice_mut;
 use std::mem;
 use std::mem::size_of;
 use std::os::raw::{c_char, c_int, c_void};
@@ -300,12 +301,14 @@ pub trait Gl {
                                  format: GLenum,
                                  ty: GLenum,
                                  output: &mut [u8]);
-    fn get_integer_v(&self, name: GLenum) -> GLint;
-    fn get_integer_64v(&self, name: GLenum) -> GLint64;
-    fn get_integer_iv(&self, name: GLenum, index: GLuint) -> GLint;
-    fn get_integer_64iv(&self, name: GLenum, index: GLuint) -> GLint64;
-    fn get_boolean_v(&self, name: GLenum) -> GLboolean;
-    fn get_float_v(&self, name: GLenum) -> GLfloat;
+
+    unsafe fn get_integer_v(&self, name: GLenum, result: &mut [GLint]);
+    unsafe fn get_integer_64v(&self, name: GLenum, result: &mut [GLint64]);
+    unsafe fn get_integer_iv(&self, name: GLenum, index: GLuint, result: &mut [GLint]);
+    unsafe fn get_integer_64iv(&self, name: GLenum, index: GLuint, result: &mut [GLint64]);
+    unsafe fn get_boolean_v(&self, name: GLenum, result: &mut [GLboolean]);
+    unsafe fn get_float_v(&self, name: GLenum, result: &mut [GLfloat]);
+
     fn get_framebuffer_attachment_parameter_iv(&self,
                                                target: GLenum,
                                                attachment: GLenum,
@@ -362,7 +365,6 @@ pub trait Gl {
                                offset: GLuint);
     fn vertex_attrib_divisor(&self, index: GLuint, divisor: GLuint);
     fn viewport(&self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
-    fn get_viewport(&self) -> (GLint, GLint, GLsizei, GLsizei);
     fn scissor(&self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
     fn line_width(&self, width: GLfloat);
     fn use_program(&self, program: GLuint);
@@ -442,18 +444,18 @@ pub trait Gl {
     fn get_frag_data_location(&self, program: GLuint, name: &str) -> c_int;
     fn get_uniform_location(&self, program: GLuint, name: &str) -> c_int;
     fn get_program_info_log(&self, program: GLuint) -> String;
-    fn get_program_iv(&self, program: GLuint, pname: GLenum) -> GLint;
+    unsafe fn get_program_iv(&self, program: GLuint, pname: GLenum, result: &mut [GLint]);
     fn get_program_binary(&self, program: GLuint) -> (Vec<u8>, GLenum);
     fn program_binary(&self, program: GLuint, format: GLenum, binary: &[u8]);
     fn program_parameter_i(&self, program: GLuint, pname: GLenum, value: GLint);
-    fn get_vertex_attrib_iv(&self, index: GLuint, pname: GLenum) -> GLint;
-    fn get_vertex_attrib_fv(&self, index: GLuint, pname: GLenum) -> Vec<GLfloat>;
+    unsafe fn get_vertex_attrib_iv(&self, index: GLuint, pname: GLenum, result: &mut [GLint]);
+    unsafe fn get_vertex_attrib_fv(&self, index: GLuint, pname: GLenum, result: &mut [GLfloat]);
     fn get_vertex_attrib_pointer_v(&self, index: GLuint, pname: GLenum) -> GLsizeiptr;
     fn get_buffer_parameter_iv(&self, target: GLuint, pname: GLenum) -> GLint;
     fn get_shader_info_log(&self, shader: GLuint) -> String;
     fn get_string(&self, which: GLenum) -> String;
     fn get_string_i(&self, which: GLenum, index: GLuint) -> String;
-    fn get_shader_iv(&self, shader: GLuint, pname: GLenum) -> GLint;
+    unsafe fn get_shader_iv(&self, shader: GLuint, pname: GLenum, result: &mut [GLint]);
     fn get_shader_precision_format(&self,
                                    shader_type: GLuint,
                                    precision_type: GLuint)
@@ -507,12 +509,6 @@ pub trait Gl {
         program: GLuint,
         name: &str,
     ) -> GLint;
-
-    fn alias_point_size_range(&self) -> (GLfloat, GLfloat);
-    fn alias_line_width_range(&self) -> (GLfloat, GLfloat);
-
-    /// Returns the the maximum supported width and height of the viewport.
-    fn max_viewport_dims(&self) -> (GLint, GLint);
 
     // GL_KHR_debug
     fn get_debug_messages(&self) -> Vec<DebugMessage>;
